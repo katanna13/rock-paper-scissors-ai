@@ -20,10 +20,10 @@ def bot_move(history):
     return loses[predict]
 def determine_winner(player,computer):
     if player == computer:
-        return 1
+        return "draw"
     if loses[player] == computer:
-        return 2
-    return 0
+        return "lose"
+    return "win"
 
 def play_game():
     wins = 0
@@ -37,10 +37,10 @@ def play_game():
             computer = bot_move(history)
             print("Computer chose:", computer)
             result = determine_winner(choice, computer)
-            if result == 0:
+            if result == "win":
                 wins += 1
                 print("You won!")
-            elif result == 1:
+            elif result == "draw":
                 draws += 1
                 print("Draw")
             else:
