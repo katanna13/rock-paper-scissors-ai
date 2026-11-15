@@ -1,8 +1,6 @@
 import pytest
-from _pytest import monkeypatch
 
-from main import determine_winner, predict_move,bot_move
-
+from main import determine_winner, predict_move,bot_move,predict_move_recent,simulate_games
 @pytest.mark.parametrize(
     "player, computer, expected",[
         ("rock", "rock", "draw"),
@@ -33,15 +31,15 @@ def test_predict_move(history, expected):
     assert predict_move(history) == expected
 
 @pytest.mark.parametrize(
-    "history, expected",[
-        (["rock","rock","paper"],"paper"),
-        (["rock","paper","paper"],"scissor"),
-        (["rock","scissor","scissor"],"rock"),
+    "history,strategy,window_size, expected",[
+        (["rock","rock","paper"],"full_history",0,"paper"),
+        (["rock","paper","paper","rock","rock","scissor"],"sliding_window",3,"paper"),
+        (["rock","scissor","scissor"],"full_history",0,"rock"),
     ]
 )
 
-def test_bot_move(history, expected):
-    assert bot_move(history) == expected
+def test_bot_move(history,strategy,window_size, expected):
+    assert bot_move(history,strategy,window_size) == expected
 
 def test_bot_move_empty_history(monkeypatch):
     monkeypatch.setattr(
@@ -49,3 +47,28 @@ def test_bot_move_empty_history(monkeypatch):
         lambda choises: "paper"
     )
     assert bot_move([]) == "paper"
+
+def test_predict_move_recent():
+    history = ["rock"] * 5 + ["scissor"] * 3
+    assert predict_move(history) == "rock"
+    assert predict_move_recent(history, 5) == "scissor"
+
+def test_window_size():
+    with pytest.raises(ValueError):
+        predict_move_recent([],-1)
+
+def test_simulate_games():
+    wins,draws,losses = simulate_games(
+        100, "random", "sliding_window"
+    )
+    assert wins+draws+losses == 100
+
+    wins,draws,losses = simulate_games(
+        100, "always_rock","sliding_window"
+    )
+    assert wins>=99 and draws+losses<=1
+
+def test_unknown_strategy():
+    with pytest.raises(ValueError):
+        bot_move([],"unknown_strategy")
+        simulate_games(100,"unknown","sliding_window")
