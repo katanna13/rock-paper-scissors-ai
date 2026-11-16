@@ -1,6 +1,6 @@
 import pytest
 
-from main import determine_winner, predict_move,bot_move,predict_move_recent,simulate_games
+from main import determine_winner, predict_move,bot_move,predict_move_recent,simulate_games,predict_move_markov
 @pytest.mark.parametrize(
     "player, computer, expected",[
         ("rock", "rock", "draw"),
@@ -72,3 +72,18 @@ def test_unknown_strategy():
     with pytest.raises(ValueError):
         bot_move([],"unknown_strategy")
         simulate_games(100,"unknown","sliding_window")
+
+def test_predict_move_markov():
+    assert predict_move_markov([]) is None
+    assert predict_move_markov(["rock"]) is None
+    assert predict_move_markov(["rock","scissor"]) is None
+    assert predict_move_markov(["rock","paper","rock"]) == "paper"
+
+def test_move_markov(monkeypatch):
+    monkeypatch.setattr(
+        "main.random.choice",
+        lambda choises: "rock"
+    )
+    assert bot_move([],"markov") == "rock"
+    assert bot_move(["rock","scissor"],"markov") == "rock"
+    assert bot_move(["rock","paper","rock"],"markov") == "scissor"

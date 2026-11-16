@@ -17,7 +17,25 @@ def predict_move_recent(history,window_size=20):
     if window_size<=0:
         raise ValueError("window_size must be positive")
     return predict_move(history[-window_size:])
+def predict_move_markov(history):
+    if not history:
+        return None
+    count = {
+        "rock": {"paper":0, "scissor":0,"rock":0},
+        "paper": {"rock":0, "scissor":0,"paper":0},
+        "scissor": {"paper":0, "rock":0, "scissor":0},
+    }
 
+    for i,move in enumerate(history[:-1]):
+        count[move][history[i+1]] += 1
+    max_value = 0
+    for value in count[history[-1]]:
+        if count[history[-1]][value]>max_value:
+            max_value = count[history[-1]][value]
+            winner = value
+    if max_value==0:
+        return None
+    return winner
 def bot_move(history,strategy="sliding_window",window_size=20):
     if not history:
         return random.choice(["rock", "paper", "scissor"])
@@ -25,6 +43,10 @@ def bot_move(history,strategy="sliding_window",window_size=20):
         predict = predict_move(history)
     elif strategy == "sliding_window":
         predict = predict_move_recent(history,window_size)
+    elif strategy == "markov":
+        predict = predict_move_markov(history)
+        if predict is None:
+            return random.choice(["rock", "paper", "scissor"])
     else:
         raise ValueError(f"Unknown bot strategy: {strategy}")
     return loses[predict]
@@ -95,7 +117,5 @@ def play_game():
             print("Invalid input. Try again.")
 
 if __name__ == "__main__":
-    print(simulate_games(300, "cycle", "full_history"))
-    print(simulate_games(300, "cycle", "sliding_window", 5))
-    print(simulate_games(300, "cycle", "sliding_window", 20))
-    #play_game()
+    print("Random:", simulate_games(1000, "random", "markov"))
+    print("Switch:", simulate_games(200, "switch", "markov"))
